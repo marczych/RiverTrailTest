@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>RiverTrail</title>
+      <script type="text/javascript" src="RiverTrail/jslib/ParallelArray.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/narcissus/jsdefs.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/narcissus/jslex.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/narcissus/jsparse.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/narcissus/jsdecomp.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/definitions.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/helper.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/driver.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/dotviz.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/typeinference.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/rangeanalysis.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/inferblockflow.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/infermem.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/genOCL.js"></script>
+      <script type="application/javascript" src="RiverTrail/jslib/jit/compiler/runOCL.js"></script>
+
+      <script type="text/javascript">
+         function updateCanvasSize() {
+            var canvas = document.getElementById("output");
+            var height = parseInt(document.getElementById("height").value);
+            canvas.setAttribute('height', height);
+
+            var width = parseInt(document.getElementById("width").value);
+            canvas.setAttribute('width', width);
+         }
+
+         function go() {
+            updateCanvasSize();
+            var output = document.getElementById("output");
+            var width = output.width;
+            var height = output.height;
+
+            var picture = new ParallelArray([width, height], function f(idx, width, height) {
+               var x = idx[0];
+               var y = idx[1];
+               var r;
+               var g;
+               var b;
+               var a = 255;
+
+               if (x > y) {
+                  r = Math.floor((x / width) * 255);
+                  g = Math.floor((y / height) * 255)
+                  b = ((x / y) * 255) % 255;
+               } else {
+                  b = ((y / x) * 255) % 255;
+                  r = Math.floor((y / width) * 255);
+                  g = Math.floor((x / height) * 255)
+               }
+
+               /*
+               var ret =  r << 24;
+                   ret |= g << 16;
+                   ret |= b << 8;
+                   ret |= a;
+                   */
+
+               var ret = a + r + g + b;
+
+               return ret;
+            }, width, height);
+
+            writeResult(output, picture, width, height);
+         }
+
+         function writeResult(canvas, picture, width, height) {
+            var context = canvas.getContext("2d");
+            var image = context.createImageData(width, height);
+            var pix = image.data;
+            var c = 0;
+
+            var flat = picture.flatten();
+            var outBuffer = flat.getArray();
+
+            for (var t = 0; t < width*height; t++) {
+               var i = outBuffer[t];
+
+               pix[c++] = (i & (255 << 24)) >>> 24;
+               pix[c++] = (i & (255 << 16)) >>> 16;
+               pix[c++] = (i & (255 << 8)) >>> 8;
+               pix[c++] = i & 255;
+            }
+
+            context.putImageData(image, 0, 0);
+         }
+      </script>
+   </head>
+   <body>
+      <input type="text" id="width" value="255" />
+      <input type="text" id="height" value="255" />
+      <p onclick="go()">Click me</p>
+      <canvas id="output" width="255" height="255"></canvas>
+   </body>
+</html
