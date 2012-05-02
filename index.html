@@ -90,9 +90,13 @@
       </script>
    </head>
    <body>
-      <input type="text" id="width" value="255" />
-      <input type="text" id="height" value="255" />
-      <p onclick="go()">Click me</p>
+      <div style="margin-bottom: 20px;">
+         <label for="width">Width</label>
+         <input type="text" name="width" id="width" value="255" />
+         <label for="height">Height</label>
+         <input type="text" name="height" id="height" value="255" />
+         <a href="#" onclick="go()">Render</a>
+      </div>
       <canvas id="output" width="255" height="255"></canvas>
    </body>
 </html
