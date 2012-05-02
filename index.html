@@ -28,40 +28,29 @@
             canvas.setAttribute('width', width);
          }
 
+         // Note to self: it seems like switches and bitwise operators can't be parallelized
          function go() {
             updateCanvasSize();
             var output = document.getElementById("output");
             var width = output.width;
             var height = output.height;
 
-            var picture = new ParallelArray([width, height], function f(idx, width, height) {
-               var x = idx[0];
-               var y = idx[1];
-               var r;
-               var g;
-               var b;
-               var a = 255;
+            // 4 elements for each pixel
+            var picture = new ParallelArray(width * height * 4, function f(idx, width, height) {
+               var itr = idx % 4;
+               var pixelNum = Math.floor(idx / 4);
+               var x = pixelNum % width;
+               var y = pixelNum / width;
 
-               if (x > y) {
-                  r = Math.floor((x / width) * 255);
-                  g = Math.floor((y / height) * 255)
-                  b = ((x / y) * 255) % 255;
+               if (itr == 0) { // R
+                  return Math.floor((x / width) * 255);
+               } else if (itr == 1) { // G
+                  return Math.floor((y / height) * 255);
+               } else if (itr == 2) { // B
+                  return Math.floor((x / width) * 255);
                } else {
-                  b = ((y / x) * 255) % 255;
-                  r = Math.floor((y / width) * 255);
-                  g = Math.floor((x / height) * 255)
+                  return 255;
                }
-
-               /*
-               var ret =  r << 24;
-                   ret |= g << 16;
-                   ret |= b << 8;
-                   ret |= a;
-                   */
-
-               var ret = a + r + g + b;
-
-               return ret;
             }, width, height);
 
             writeResult(output, picture, width, height);
@@ -71,18 +60,10 @@
             var context = canvas.getContext("2d");
             var image = context.createImageData(width, height);
             var pix = image.data;
-            var c = 0;
+            var outBuffer = picture.getArray();
 
-            var flat = picture.flatten();
-            var outBuffer = flat.getArray();
-
-            for (var t = 0; t < width*height; t++) {
-               var i = outBuffer[t];
-
-               pix[c++] = (i & (255 << 24)) >>> 24;
-               pix[c++] = (i & (255 << 16)) >>> 16;
-               pix[c++] = (i & (255 << 8)) >>> 8;
-               pix[c++] = i & 255;
+            for (var i = 0; i < width*height*4; i++) {
+               pix[i] = outBuffer[i];
             }
 
             context.putImageData(image, 0, 0);
